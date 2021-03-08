@@ -63,12 +63,25 @@ class Block {
      *     or Reject with an error.
      */
     getBData() {
-        // Getting the encoded data saved in the Block
-        // Decoding the data to retrieve the JSON representation of the object
-        // Parse the data to an object to be retrieve.
+        let self = this;
+        return new Promise((resolve, reject) => {
+            try {
+                if (this.isGenesis()) {
+                    reject(new Error("Cannot decode Genesis Block."));
+                }
 
-        // Resolve with the data if the object isn't the Genesis block
-
+                // Getting the encoded data saved in the Block
+                const encodedData = self.body;
+                // Decoding the data to retrieve the JSON representation of the object
+                const decodedData = hex2ascii(encodedData);
+                // Parse the data to an object to be retrieve.
+                const jsonObj = JSON.parse(decodedData);
+                // Resolve with the data if the object isn't the Genesis block
+                resolve(jsonObj);
+            } catch (e) {
+                reject(e);
+            }
+        });
     }
 
     /**
@@ -84,6 +97,13 @@ class Block {
                 previousHash: this.previousBlockHash,
             })
         ).toString();
+    }
+
+    /**
+     * Determine if the the block is genesis block
+     */
+    isGenesis() {
+        return this.height === 0;
     }
 }
 
