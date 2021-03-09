@@ -52,6 +52,10 @@ class Blockchain {
         });
     }
 
+    getChain() {
+        return this.chain;
+    }
+
     /**
      * _addBlock(block) will store a block in the chain
      * @param {*} block
@@ -69,7 +73,7 @@ class Blockchain {
         return new Promise(async (resolve, reject) => {
             // Assign time, height and previous hash
             block.time = new Date().getTime().toString().slice(0,-3);
-            block.height = self.heigh + 1;
+            block.height = self.height + 1;
             if (self.height === -1) {
                 block.previousBlockHash = null;
             } else {
@@ -157,6 +161,11 @@ class Blockchain {
         return new Promise((resolve, reject) => {
             const block = self.chain.find(b => b.hash === hash);
             if (block) {
+                if (!block.isGenesis()) {
+                    block.getBData().then((d) => {
+                        block.body = d;
+                    });
+                }
                 resolve(block);
             } else {
                 resolve(null);
@@ -174,6 +183,11 @@ class Blockchain {
         return new Promise((resolve, reject) => {
             let block = self.chain.find(b => b.height === height);
             if(block){
+                if (!block.isGenesis()) {
+                    block.getBData().then((d) => {
+                        block.body = d;
+                    });
+                }
                 resolve(block);
             } else {
                 resolve(null);
