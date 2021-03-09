@@ -141,9 +141,8 @@ class Blockchain {
                     reject(new Error("Failed to verify the ownership of the address."));
                 }
                 // Create the block and add it to the chain
-                const block = this._addBlock(new Block({ star, address }));
-
-                resolve(block);
+                const newBlock = new BlockClass.Block({ star, address });
+                resolve(await self._addBlock(newBlock));
             } catch (e) {
                 reject(e);
             }
@@ -161,11 +160,6 @@ class Blockchain {
         return new Promise((resolve, reject) => {
             const block = self.chain.find(b => b.hash === hash);
             if (block) {
-                if (!block.isGenesis()) {
-                    block.getBData().then((d) => {
-                        block.body = d;
-                    });
-                }
                 resolve(block);
             } else {
                 resolve(null);
@@ -183,11 +177,6 @@ class Blockchain {
         return new Promise((resolve, reject) => {
             let block = self.chain.find(b => b.height === height);
             if(block){
-                if (!block.isGenesis()) {
-                    block.getBData().then((d) => {
-                        block.body = d;
-                    });
-                }
                 resolve(block);
             } else {
                 resolve(null);
@@ -207,11 +196,16 @@ class Blockchain {
         return new Promise((resolve, reject) => {
             try {
                 self.chain.forEach((block, _) => {
-                    block.getBData().then((data) => {
-                        if (data.address === address) {
-                            stars.push(data.star);
-                        }
-                    })
+                    if (!block.isGenesis()) {
+                        block.getBData().then((data) => {
+                            if (data.address === address) {
+                                stars.push({
+                                    owner: address,
+                                    star: data.star
+                                });
+                            }
+                        });
+                    }
                 });
                 resolve(stars);
             } catch (e) {
@@ -238,12 +232,11 @@ class Blockchain {
                     }
                 });
                 // Check previousHash
-                if (block.isGenesis()) {
-                    continue;
-                }
-                const previousHash = self.chain[i - 1].hash
-                if (previousHash !== block.previousBlockHash) {
-                    errorLog.push(`Discontinous chain detected for block: height = ${block.height}, hash = ${block.hash}`)
+                if (!block.isGenesis()) {
+                    const previousHash = self.chain[i - 1].hash
+                    if (previousHash !== block.previousBlockHash) {
+                        errorLog.push(`Discontinous chain detected for block: height = ${block.height}, hash = ${block.hash}`)
+                    }
                 }
             });
             resolve(errorLog);
