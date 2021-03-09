@@ -12,6 +12,9 @@ const SHA256 = require('crypto-js/sha256');
 const BlockClass = require('./block.js');
 const bitcoinMessage = require('bitcoinjs-message');
 
+// This is the max allowable time before the ownership verfication message expired.
+const OWNERSHIP_VERIFICATION_DURATION = 5 * 60; // 5min
+
 class Blockchain {
 
     /**
@@ -120,7 +123,26 @@ class Blockchain {
     submitStar(address, message, signature, star) {
         let self = this;
         return new Promise(async (resolve, reject) => {
+            try {
+                // Get the time from the message sent as a parameter example
+                const msgTime = parseInt(message.split(':')[1]);
+                // Get the current time
+                const currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
+                // Check if the time elapsed is less than 5 minutes
+                if (currentTime - msgTime > OWNERSHIP_VERIFICATION_DURATION) {
+                    reject(new Error("Ownership Verification message expired."))
+                }
+                // Veify the message with wallet address and signature
+                if (!bitcoinMessage.verify(message, address, signature)) {
+                    reject(new Error("Failed to verify the ownership of the address."));
+                }
+                // Create the block and add it to the chain
+                const block = this._addBlock(new Block({ star, address }));
 
+                resolve(block);
+            } catch (e) {
+                reject(e);
+            }
         });
     }
 
