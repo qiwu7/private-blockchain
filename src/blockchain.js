@@ -155,7 +155,7 @@ class Blockchain {
     getBlockByHash(hash) {
         let self = this;
         return new Promise((resolve, reject) => {
-            const block = self.chain.filter(p => p.hash === hash)[0];
+            const block = self.chain.find(b => b.hash === hash);
             if (block) {
                 resolve(block);
             } else {
@@ -172,7 +172,7 @@ class Blockchain {
     getBlockByHeight(height) {
         let self = this;
         return new Promise((resolve, reject) => {
-            let block = self.chain.filter(p => p.height === height)[0];
+            let block = self.chain.find(b => b.height === height);
             if(block){
                 resolve(block);
             } else {
@@ -191,7 +191,18 @@ class Blockchain {
         let self = this;
         let stars = [];
         return new Promise((resolve, reject) => {
-
+            try {
+                self.chain.forEach((block, _) => {
+                    block.getBData().then((data) => {
+                        if (data.address === address) {
+                            stars.push(data.star);
+                        }
+                    })
+                });
+                resolve(stars);
+            } catch (e) {
+                reject(e);
+            }
         });
     }
 
