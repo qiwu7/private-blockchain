@@ -216,10 +216,25 @@ class Blockchain {
         let self = this;
         let errorLog = [];
         return new Promise(async (resolve, reject) => {
-
+            self.chain.forEach((block, i) => {
+                // Validate each block
+                block.validate().then((valid) => {
+                    if (!valid) {
+                        errorLog.push(`Invalid block: height = ${block.height}, hash = ${block.hash}`);
+                    }
+                });
+                // Check previousHash
+                if (block.isGenesis()) {
+                    continue;
+                }
+                const previousHash = self.chain[i - 1].hash
+                if (previousHash !== block.previousBlockHash) {
+                    errorLog.push(`Discontinous chain detected for block: height = ${block.height}, hash = ${block.hash}`)
+                }
+            });
+            resolve(errorLog);
         });
     }
-
 }
 
 module.exports.Blockchain = Blockchain;
